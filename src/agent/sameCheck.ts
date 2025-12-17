@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { sameCheckTool } from "../../tools/sameCheckTool";
+import { sameCheckTool } from "../tools/sameCheckTool";
 
 const model = new ChatOpenAI({
   model: "deepseek-chat",

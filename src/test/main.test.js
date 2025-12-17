@@ -8,6 +8,12 @@ const url = "http://localhost:8000/chat";
  * 帮我查询信贷科技的水电缴费情况
  * 
  * 帮我查询信贷科技的第二季度水电缴费情况，负责人是阿妈，手机尾号 884818
+ * 
+ * 砌砖科技
+ * 
+ * 帮我查询砌砖科技的水电缴费情况
+ * 
+ * 查一下水费就行
  */
 
 const response = await fetch(url, {
@@ -19,7 +25,7 @@ const response = await fetch(url, {
     type: "feature",
     from: "frontend",
     to: "server",
-    content: "帮我查询信贷科技的水电缴费情况",
+    content: "查一下水费就行",
     userId: "SongBiao",
     timestamp: Date.now(),
   }),

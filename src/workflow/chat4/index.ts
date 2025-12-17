@@ -6,13 +6,13 @@ import { mainControl } from "../mainControl";
 const FlowID = 4;
 
 const visit = async (talker: Talker, message: string) => {
-  if (talker.inFlowData === null || talker.inFlowData.flowId !== FlowID) {
-    talker.inFlowData = {
-      flowId: FlowID,
-      step: 0,
-    };
-  }
-  talker.inFlowData = null;
+  // if (talker.inFlowData === null || talker.inFlowData.flowId !== FlowID) {
+  //   talker.inFlowData = {
+  //     flowId: FlowID,
+  //     step: 0,
+  //   };
+  // }
+  // talker.inFlowData = null;
   const res = String(await basicChat(message, talker));
   return res;
 };

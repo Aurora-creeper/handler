@@ -4,7 +4,7 @@ import { Talker } from "../../types";
 import { WorkFlow } from "../../types/flow";
 import { mainControl } from "../mainControl";
 import { getPinyin } from "../../pinyin";
-import { sameCheck } from "../../agent/slot/sameCheck";
+import { sameCheck } from "../../agent/sameCheck";
 import { feeSlot } from "../../agent/slot/feeSlot";
 
 const FlowID = 1;
@@ -16,58 +16,107 @@ type FlowData = {
 };
 
 type Metadata = {
-  company: { value: null | string; checked: boolean };
-  project: { value: null | string; checked: boolean };
-  phone: { value: null | string; checked: boolean };
-  owner: { value: null | string; checked: boolean };
+  company: { value: null | string; id: null | number; checked: boolean };
+  project: { value: null | string; id: null | number; checked: boolean };
+  phone: { value: null | string; id: null | number; checked: boolean };
+  owner: { value: null | string; id: null | number; checked: boolean };
 };
 
 async function check(talker: Talker<FlowData>) {
-  // http://111.229.188.40:3000/api/companies/names
   const data = talker.inFlowData!.metadata;
   const must: string[] = [];
   const optional: string[] = [];
 
-  if (!data.company.checked) {
-    if (data.company.value !== null) {
-      console.log("开始检查公司名称");
-      const py = getPinyin(data.company.value);
+  async function makeCheck(
+    key: keyof Metadata,
+    description: string,
+    api: string
+  ) {
+    const aimData = data[key];
 
-      const some = (
-        await axios.get(
-          `http://111.229.188.40:3000/api/companies/nameSearch/${py}`
-        )
-      ).data.data as object;
+    if (aimData.checked) return;
 
+    if (aimData.value !== null) {
+      console.log(`开始检查 ${key}`);
+
+      const py = getPinyin(aimData.value);
+
+      // 第一层 mysql 按编辑距离，筛选 top 10
+      const some = (await axios.get(`${api}${py}`)).data.data as Record<
+        string,
+        any
+      >;
+
+      // LLM 二次处理候选项，做语义判断
       const checkResult = await sameCheck(
         JSON.stringify(some),
-        `${data.company.value}
+        `${aimData.value}
         ${py}
         `
       );
 
       if (checkResult === false) {
-        data.company.value = null;
-        data.company.checked = false;
+        // 模型没有进行工具调用
+        aimData.value = null;
+
+        aimData.checked = false;
+
+        console.error(new Error("模型没有进行工具调用"));
       } else {
         const id = checkResult.args.id as null | number;
-        if (id !== null) {
-          data.company.checked = true;
+
+        if (id === null) {
+          // 模型认为不存在匹配的对象
+          aimData.value = null;
+
+          aimData.checked = false;
+
+          console.log(`模型认为不存在匹配的 ${key}`);
+        } else {
+          // 存在匹配的公司名称
+
+          aimData.id = id;
+
+          for (const key in some) {
+            if (!Object.hasOwn(some, key)) continue;
+
+            const element = some[key];
+
+            if (element.id === id) aimData.value = element.name;
+          }
+
+          aimData.checked = true;
+
+          console.log(`存在匹配的 ${key}: ${aimData.value}`);
         }
       }
     }
 
-    if (!data.company.checked) must.push("公司名称");
+    // 如果依然缺失，加入 must 数组
+    if (!aimData.checked) must.push(description);
   }
 
-  if (!data.project.checked) must.push("缴费项目名称");
+  const vecp: Promise<void>[] = [
+    makeCheck(
+      "company",
+      "公司名称",
+      "http://111.229.188.40:3000/api/companies/name/search/"
+    ),
+    makeCheck(
+      "project",
+      "缴费项目名称",
+      "http://111.229.188.40:3000/api/payment-items/name/search/"
+    ),
+  ];
+
+  await Promise.all(vecp);
 
   if (data.phone.checked || data.owner.checked) {
     // 如果有一个合法，则合法
     // skip
   } else {
-    if (!data.phone.checked) optional.push("手机末四位");
-    if (!data.owner.checked) optional.push("负责人姓名");
+    // if (!data.phone.checked) optional.push("手机末四位");
+    // if (!data.owner.checked) optional.push("负责人姓名");
   }
 
   if (must.length == 0 && optional.length == 0) {
@@ -79,14 +128,15 @@ async function check(talker: Talker<FlowData>) {
 
 async function visit(talker: Talker<FlowData>, message: string) {
   if (talker.inFlowData === null || talker.inFlowData.flowId !== FlowID) {
+    // 初始化 metadata
     talker.inFlowData = {
       flowId: FlowID,
       step: 0,
       metadata: {
-        company: { value: null, checked: false },
-        project: { value: null, checked: false },
-        phone: { value: null, checked: false },
-        owner: { value: null, checked: false },
+        company: { value: null, id: null, checked: false },
+        project: { value: null, id: null, checked: false },
+        phone: { value: null, id: null, checked: false },
+        owner: { value: null, id: null, checked: false },
       },
     };
   }
@@ -106,7 +156,7 @@ async function visit(talker: Talker<FlowData>, message: string) {
     const res = await feeSlot(message, talker);
 
     if (res === false) {
-      console.log("提槽环节失败");
+      console.error(new Error("提槽环节 feeSlot 没有函数调用"));
     } else {
       const { company, project, phoneTail, owner } = res.args;
       if (company && metadata.company.checked === false)
@@ -129,18 +179,32 @@ async function visit(talker: Talker<FlowData>, message: string) {
   else {
     // 若不满足，开始提示用户
     const { must, optional } = checkResult;
-    const res = String(await basicChat(message, talker));
+    // const res = String(await basicChat(message, talker));
+    //
+
+    let res = `您提供的信息有所缺失，请再完善以下信息：`;
+    if (must.length > 0) res += `${must.join(", ")}`;
     return res;
   }
 
   // 如果 metadata 已经满足
   if (talker.inFlowData.step === 1) {
     // 查询环节
-    const res = String(await basicChat(message, talker));
+    const cid = talker.inFlowData.metadata.company.id;
+    const pid = talker.inFlowData.metadata.project.id;
+
+    // const res = String(await basicChat(message, talker));
+    const some = (
+      await axios.get(
+        `http://111.229.188.40:3000/api/flow/feeFlow?companyId=${cid}&paymentItemId=${pid}`
+      )
+    ).data.data as Record<string, any>;
+
     return res;
   }
 
-  return "";
+  console.error(new Error("内部错误"));
+  return "内部错误";
 }
 
 export const fee1: WorkFlow<FlowData> = {

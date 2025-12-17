@@ -25,6 +25,7 @@ class TalkerPool {
         userId,
         activeAt: new Date(),
         inFlowData: null,
+        keepTopic: false,
       });
     }
 

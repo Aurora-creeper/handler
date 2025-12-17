@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import e, { Request, Response } from "express";
 import { FrontMessage } from "./types/message";
 import { talkerPool } from "./talker/pool";
 import { makeSortNew } from "./agent/makeSortNew";
@@ -19,8 +19,14 @@ export async function solve(req: Request, res: Response) {
     // 没有工作流，进行意图判断
     result = await makeSortNew(content, talker);
   } else {
-    // 先前有工作流，先进行意图判断，然后分发给工作流处理
-    result = await makeSortOld(content, talker);
+    // 先前有工作流
+    if (talker.keepTopic) {
+      // 直接分发给工作流
+      result = { type: talker.inFlowData.flowId };
+    } else {
+      // 进行意图判断，分发给工作流处理
+      result = await makeSortOld(content, talker);
+    }
   }
 
   // [兜底] 意图判断失效
