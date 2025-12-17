@@ -20,15 +20,18 @@
   "dependencies": {
     "@langchain/core": "^1.1.5",
     "@langchain/openai": "^1.2.0",
+    "@pinyin-pro/data": "^1.2.0",
+    "axios": "^1.13.2",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "pinyin-pro": "^3.27.0",
     "ws": "^8.18.3",
     "zod": "^4.2.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^20.10.5",
     "@types/ws": "^8.18.1",
-    "@types/express": "^5.0.6",
     "typescript": "^5.3.3"
   }
 }

@@ -7,7 +7,10 @@ class MainControl {
   async dispatch(flowId: number, talker: Talker, message: string) {
     const flow = this.flows.get(flowId);
 
-    if (!flow) return null;
+    if (!flow) {
+      console.error(`flow ${flowId} not found`);
+      return null;
+    }
 
     return await flow.visit(talker, message);
   }

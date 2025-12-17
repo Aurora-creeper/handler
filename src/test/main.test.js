@@ -4,6 +4,10 @@ const url = "http://localhost:8000/chat";
  * 温柔是你的美，天气真魅力
  * 
  * 我家热得快炸了
+ * 
+ * 帮我查询信贷科技的水电缴费情况
+ * 
+ * 帮我查询信贷科技的第二季度水电缴费情况，负责人是阿妈，手机尾号 884818
  */
 
 const response = await fetch(url, {
@@ -15,7 +19,7 @@ const response = await fetch(url, {
     type: "feature",
     from: "frontend",
     to: "server",
-    content: "温柔是你的美，天气真魅力",
+    content: "帮我查询信贷科技的水电缴费情况",
     userId: "SongBiao",
     timestamp: Date.now(),
   }),

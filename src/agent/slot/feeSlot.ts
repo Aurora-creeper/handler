@@ -36,5 +36,16 @@ export async function feeSlot(text: string, talker: Talker) {
     new HumanMessage(text),
   ]);
 
-  return response.content;
+  if (response.tool_calls && response.tool_calls.length > 0) {
+    // 处理 null 字符串
+    const tc = response.tool_calls[0];
+    const args = tc.args as Record<string, any>;
+    for (const key in args) {
+      if (!Object.hasOwn(args, key)) continue;
+      if (args[key] == "null") args[key] = null;
+    }
+    return tc;
+  }
+
+  return false;
 }
