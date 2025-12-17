@@ -31,7 +31,8 @@ const Prompt = `
 export async function sameCheck(sys: string, text: string, prompt = Prompt) {
   const response = await model.invoke([
     new SystemMessage(
-      `${prompt}
+      `
+${prompt}
 
 ${sys}
 `

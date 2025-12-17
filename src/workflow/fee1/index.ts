@@ -6,6 +6,7 @@ import { mainControl } from "../mainControl";
 import { getPinyin } from "../../pinyin";
 import { sameCheck } from "../../agent/sameCheck";
 import { feeSlot } from "../../agent/slot/feeSlot";
+import { feeSummary } from "../../agent/feeSummary";
 
 const FlowID = 1;
 
@@ -199,6 +200,8 @@ async function visit(talker: Talker<FlowData>, message: string) {
         `http://111.229.188.40:3000/api/flow/feeFlow?companyId=${cid}&paymentItemId=${pid}`
       )
     ).data.data as Record<string, any>;
+
+    const res = String(await feeSummary(JSON.stringify(some)));
 
     return res;
   }
