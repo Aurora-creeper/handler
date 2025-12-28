@@ -5,9 +5,9 @@ import { Talker } from "../../types";
 /*
   一个通用提槽的示例，适用于槽位不能提前明确的业务场景。
 
-  如果确定需要什么槽位的话，可以靠 function call 提供给 LLM，这样准确性非常高。
+  如果确定需要什么槽位的话，可以靠 function call 提供给 LLM，这样准确性相当高。
 
-  请谨慎使用这个。
+  请谨慎使用这个方案。
 */
 
 const model = new ChatOpenAI({

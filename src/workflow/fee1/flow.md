@@ -28,4 +28,4 @@ metadata
 
 # step 1
 
-此时 metadata_1 已经是完整的，可以进入 step 2，开始查询数据。
+此时 metadata 已经是完整的，可以进入 step 2，开始查询数据。

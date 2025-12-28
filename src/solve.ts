@@ -29,9 +29,11 @@ export async function solve(req: Request, res: Response) {
     }
   }
 
-  // [兜底] 意图判断失效
   if (typeof result?.type !== "number") {
-    console.error("意图判断失效");
+    // [兜底] 意图判断失效
+
+    console.error(new Error("意图判断失效"));
+
     return res.json({
       type: "error",
       content: "意图判断失效",

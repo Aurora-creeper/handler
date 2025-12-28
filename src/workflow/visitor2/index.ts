@@ -7,6 +7,8 @@ import { getPinyin } from "../../pinyin";
 import { sameCheck } from "../../agent/sameCheck";
 import { feeSlot } from "../../agent/slot/feeSlot";
 import { feeSummary } from "../../agent/feeSummary";
+import { visitorSlot } from "../../agent/slot/visitorSlot";
+import { visitorSummary } from "../../agent/visitorSummary";
 
 const FlowID = 1;
 
@@ -18,9 +20,9 @@ type FlowData = {
 
 type Metadata = {
   company: { value: null | string; id: null | number; checked: boolean };
-  project: { value: null | string; id: null | number; checked: boolean };
+  time: { value: null | number; id: null | number; checked: boolean };
+  name: { value: null | string; id: null | number; checked: boolean };
   phone: { value: null | string; id: null | number; checked: boolean };
-  owner: { value: null | string; id: null | number; checked: boolean };
 };
 
 async function check(talker: Talker<FlowData>) {
@@ -40,6 +42,7 @@ async function check(talker: Talker<FlowData>) {
     if (aimData.value !== null) {
       console.log(`开始检查 ${key}`);
 
+      // @ts-ignore
       const py = getPinyin(aimData.value);
 
       // 第一层 mysql 按编辑距离，筛选 top 10
@@ -97,27 +100,23 @@ async function check(talker: Talker<FlowData>) {
     if (!aimData.checked) must.push(description);
   }
 
-  const vecp: Promise<void>[] = [
-    makeCheck(
-      "company",
-      "公司名称",
-      "http://111.229.188.40:3000/api/companies/name/search/"
-    ),
-    makeCheck(
-      "project",
-      "缴费项目名称",
-      "http://111.229.188.40:3000/api/payment-items/name/search/"
-    ),
-  ];
+  await makeCheck(
+    "company",
+    "公司名称",
+    "http://111.229.188.40:3000/api/companies/name/search/"
+  );
 
-  await Promise.all(vecp);
+  if (!data.time.checked) {
+    if (!data.time.value || data.time.value > 3 || data.time.value < 1)
+      must.push("访问时长 1,2 或 3 天");
+  }
 
-  if (data.phone.checked || data.owner.checked) {
-    // 如果有一个合法，则合法
-    // skip
-  } else {
-    // if (!data.phone.checked) optional.push("手机末四位");
-    // if (!data.owner.checked) optional.push("负责人姓名");
+  if (!data.name.value) {
+    must.push("你的姓名");
+  }
+
+  if (!data.phone.value) {
+    must.push("你的手机号");
   }
 
   if (must.length == 0 && optional.length == 0) {
@@ -135,9 +134,9 @@ async function visit(talker: Talker<FlowData>, message: string) {
       step: 0,
       metadata: {
         company: { value: null, id: null, checked: false },
-        project: { value: null, id: null, checked: false },
+        time: { value: null, id: null, checked: false },
+        name: { value: null, id: null, checked: false },
         phone: { value: null, id: null, checked: false },
-        owner: { value: null, id: null, checked: false },
       },
     };
   }
@@ -154,20 +153,18 @@ async function visit(talker: Talker<FlowData>, message: string) {
     console.log("进入提槽环节");
     console.log(talker.inFlowData);
 
-    const res = await feeSlot(message, talker);
+    const res = await visitorSlot(message, talker);
 
     if (res === false) {
-      console.error(new Error("提槽环节 feeSlot 没有函数调用"));
+      console.error(new Error("提槽环节 visitorSlot 没有函数调用"));
     } else {
-      const { company, project, phoneTail, owner } = res.args;
+      const { company, time, name, phone } = res.args;
       if (company && metadata.company.checked === false)
         metadata.company.value = company;
-      if (project && metadata.project.checked === false)
-        metadata.project.value = project;
-      if (phoneTail && metadata.phone.checked === false)
-        metadata.phone.value = phoneTail;
-      if (owner && metadata.owner.checked === false)
-        metadata.owner.value = owner;
+      if (time && metadata.time.checked === false) metadata.time.value = time;
+      if (name && metadata.name.checked === false) metadata.name.value = name;
+      if (phone && metadata.phone.checked === false)
+        metadata.phone.value = phone;
     }
 
     console.log("结束提槽环节");
@@ -189,16 +186,15 @@ async function visit(talker: Talker<FlowData>, message: string) {
   if (talker.inFlowData.step === 1) {
     // 查询环节
     const cid = talker.inFlowData.metadata.company.id;
-    const pid = talker.inFlowData.metadata.project.id;
+    const pid = talker.inFlowData.metadata.name.id;
 
-    // const res = String(await basicChat(message, talker));
     const some = (
       await axios.get(
         `http://111.229.188.40:3000/api/flow/feeFlow?companyId=${cid}&paymentItemId=${pid}`
       )
     ).data.data as Record<string, any>;
 
-    const res = String(await feeSummary(JSON.stringify(some)));
+    const res = String(await visitorSummary(JSON.stringify(some)));
 
     talker.inFlowData = null;
 
