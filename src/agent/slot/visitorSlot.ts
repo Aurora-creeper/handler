@@ -32,6 +32,7 @@ export async function visitorSlot(text: string, talker: Talker) {
 2. 不论是否模糊，尽可能地填入信息。
 3. 必须使用工具调用。
 
+
 `),
     new HumanMessage(text),
   ]);

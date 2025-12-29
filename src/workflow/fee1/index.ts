@@ -1,15 +1,11 @@
 import axios from "axios";
-import { basicChat } from "../../agent/basicChat";
 import { Talker } from "../../types";
 import { WorkFlow } from "../../types/flow";
 import { mainControl } from "../mainControl";
-import { getPinyin } from "../../pinyin";
-import { sameCheck } from "../../agent/sameCheck";
 import { feeSlot } from "../../agent/slot/feeSlot";
 import { feeSummary } from "../../agent/feeSummary";
 import { companyCheck } from "../../check/companyCheck";
 import { projectCheck } from "../../check/projectCheck";
-import { object } from "zod";
 
 const FlowID = 1;
 
@@ -31,7 +27,7 @@ async function check(talker: Talker<FlowData>) {
   const must: string[] = [];
   const optional: string[] = [];
 
-  let chk1 = data.company.checked
+  const chk1 = data.company.checked
     ? Promise.resolve(true)
     : companyCheck(data.company.value).then((res) => {
         if (!res.checked) {
@@ -40,7 +36,7 @@ async function check(talker: Talker<FlowData>) {
         Object.assign(data.company, res);
       });
 
-  let chk2 = data.project.checked
+  const chk2 = data.project.checked
     ? Promise.resolve(true)
     : projectCheck(data.project.value).then((res) => {
         if (!res.checked) {
