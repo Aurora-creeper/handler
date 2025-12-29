@@ -1,7 +1,7 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { Talker } from "../../types";
-import { returnVisitorSlot } from "../../tools/returnVisitorSlotTool";
+import { returnVisitorSlot } from "../tools/returnVisitorSlotTool";
 
 const model = new ChatOpenAI({
   model: "deepseek-chat",

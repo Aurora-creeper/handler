@@ -1,6 +1,6 @@
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
-import { getIntentTool } from "../tools/getIntentTool.js";
+import { getIntentTool } from "./tools/getIntentTool.js";
 import type { Talker } from "../types";
 
 import dotenv from "dotenv";
