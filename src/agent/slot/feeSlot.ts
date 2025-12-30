@@ -32,6 +32,9 @@ export async function feeSlot(text: string, talker: Talker) {
 2. 不论是否模糊，尽可能地填入信息。
 3. 必须使用工具调用。
 
+以下是用户的历史输入，你需要结合历史信息进行判断：
+${JSON.stringify(talker.inFlowData!.metadata)}
+
 `),
     new HumanMessage(text),
   ]);

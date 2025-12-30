@@ -25,7 +25,7 @@ const response = await fetch(url, {
     type: "feature",
     from: "frontend",
     to: "server",
-    content: "温柔是你的美，天气真魅力",
+    content: "对的",
     userId: "SongBiao",
     timestamp: Date.now(),
   }),

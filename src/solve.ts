@@ -5,6 +5,7 @@ import { makeSortNew } from "./agent/makeSortNew";
 import { makeSortOld } from "./agent/makeSortOld";
 import { MessageStructure, ToolMessage } from "@langchain/core/messages";
 import { mainControl } from "./workflow/mainControl";
+import { cancelCheck } from "./agent/cancelCheck";
 
 export async function solve(req: Request, res: Response) {
   const { type, content, userId, timestamp } = req.body as FrontMessage;
@@ -20,7 +21,19 @@ export async function solve(req: Request, res: Response) {
     result = await makeSortNew(content, talker);
   } else {
     // 先前有工作流
-    if (talker.keepTopic) {
+
+    // 先判断是否有取消意图
+    const needCancel = await cancelCheck(content);
+
+    if (needCancel && needCancel.args.type === true) {
+      // 如果用户希望取消，则取消用户的工作流
+      talker.keepTopic = false;
+      talker.inFlowData = null;
+      result = { type: 4 };
+      console.log("用户表达了取消工作流的意图");
+    }
+
+    if (talker.inFlowData && talker.keepTopic) {
       // 直接分发给工作流
       result = { type: talker.inFlowData.flowId };
     } else {
